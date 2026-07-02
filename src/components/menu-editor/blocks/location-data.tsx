@@ -186,7 +186,7 @@ export default function LocationData({
                 )}
               >
                 {day.allDay
-                  ? `${getFormattedTime(day.startTime)} - ${getFormattedTime(day.endTime)}`
+                  ? `${getFormattedTime(day.startTime, locale)} - ${getFormattedTime(day.endTime, locale)}`
                   : t("closed")}
               </span>
             </div>

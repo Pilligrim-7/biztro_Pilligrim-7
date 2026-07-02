@@ -1,7 +1,7 @@
 /**
  * Static UI label translations for the public menu.
  * Keys are English identifiers; values are translated strings per locale.
- * Spanish (es) is the default/fallback language.
+ * English (en) is the default/fallback language.
  */
 
 export type UILabelKey =
@@ -132,8 +132,7 @@ const labels: Record<string, UILabels> = {
     search_products: "Rechercher des produits",
     search_description: "Trouvez des correspondances par nom ou description.",
     no_results: "Aucun résultat",
-    no_results_description:
-      "Essayez un autre nom ou un mot de la description.",
+    no_results_description: "Essayez un autre nom ou un mot de la description.",
     from: "À partir de",
     link_copied: "Lien copié",
     link_copy_error: "Impossible de copier le lien"
@@ -196,8 +195,7 @@ const labels: Record<string, UILabels> = {
     search_products: "Buscar produtos",
     search_description: "Encontre correspondências por nome ou descrição.",
     no_results: "Sem resultados",
-    no_results_description:
-      "Tente outro nome ou uma palavra da descrição.",
+    no_results_description: "Tente outro nome ou uma palavra da descrição.",
     from: "A partir de",
     link_copied: "Link copiado",
     link_copy_error: "Não foi possível copiar o link"
@@ -300,12 +298,12 @@ const labels: Record<string, UILabels> = {
 
 /**
  * Returns a translation function for the given locale.
- * Falls back to Spanish when the key is missing or locale is null.
+ * Falls back to English when the key is missing or locale is null.
  */
 export function getUILabels(locale: string | null) {
-  const dict = (locale && labels[locale]) || labels.es!
+  const dict = (locale && labels[locale]) || labels.en!
   return function t(key: UILabelKey, vars?: Record<string, string>): string {
-    let str = dict[key] ?? labels.es![key] ?? key
+    let str = dict[key] ?? labels.en![key] ?? key
     if (vars) {
       for (const [k, v] of Object.entries(vars)) {
         str = str.replace(`{${k}}`, v)

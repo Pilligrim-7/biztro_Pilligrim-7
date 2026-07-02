@@ -33,7 +33,7 @@ export default function GlobalError({
   return (
     <html
       className={`${inter.variable} ${sora.variable} scroll-smooth antialiased`}
-      lang="es-MX"
+      lang="en"
     >
       <body className="bg-white text-gray-950 dark:bg-gray-950 dark:text-white">
         <div className="flex h-dvh w-full flex-col">

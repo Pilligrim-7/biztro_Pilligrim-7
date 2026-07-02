@@ -171,7 +171,9 @@ export function PublicMenuActions() {
                     <Globe className="text-foreground size-4" />
                   )}
                   <span className="sr-only">
-                    {translation.locale ? "Cambiar idioma" : "Español"}
+                    {translation.locale
+                      ? "Change language"
+                      : "Original language"}
                   </span>
                 </div>
               </Menu.Trigger>

@@ -134,7 +134,7 @@ export function getOpenHoursLegend(
   const currentDayIndex = referenceDate.getDay()
   const currentMinutes =
     referenceDate.getHours() * 60 + referenceDate.getMinutes()
-  const timeLocale = locale ?? "es-MX"
+  const timeLocale = locale ?? "en-US"
 
   for (const day of openingHours) {
     if (!day.allDay) {
@@ -215,7 +215,10 @@ export function getOpenHoursStatus(
   return status
 }
 
-export function getFormattedTime(time: string | null | undefined) {
+export function getFormattedTime(
+  time: string | null | undefined,
+  locale?: string | null
+) {
   if (!time) {
     return "NA"
   }
@@ -225,7 +228,7 @@ export function getFormattedTime(time: string | null | undefined) {
     Date.UTC(2000, 0, 1, parsedTime.hour, parsedTime.minute)
   )
 
-  return new Intl.DateTimeFormat("es-MX", {
+  return new Intl.DateTimeFormat(locale ?? "en-US", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "UTC"

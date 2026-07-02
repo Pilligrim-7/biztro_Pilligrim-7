@@ -59,7 +59,7 @@ export default function RootLayout({
       className={`${beVietnamPro.variable} ${inter.variable} overscroll-none
         scroll-smooth antialiased`}
       suppressHydrationWarning
-      lang="es-MX"
+      lang="en"
     >
       {/* <AxiomWebVitals /> */}
       <body
