@@ -293,6 +293,37 @@ const labels: Record<string, UILabels> = {
     from: "起价",
     link_copied: "链接已复制",
     link_copy_error: "无法复制链接"
+  },
+  ru: {
+    information: "Информация",
+    address: "Адрес",
+    available_services: "Доступные услуги",
+    delivery: "Доставка",
+    free: "Бесплатно",
+    takeout: "С собой",
+    dine_in: "В зале",
+    closed: "Закрыто",
+    no_schedule: "Нет расписания",
+    open_until_singular: "Открыто — до {time}",
+    open_until_plural: "Открыто — до {time}",
+    monday: "Понедельник",
+    tuesday: "Вторник",
+    wednesday: "Среда",
+    thursday: "Четверг",
+    friday: "Пятница",
+    saturday: "Суббота",
+    sunday: "Воскресенье",
+    menu_detail: "Детали меню",
+    description: "Описание",
+    share: "Поделиться",
+    search: "Поиск",
+    search_products: "Поиск блюд",
+    search_description: "Ищите по названию или описанию.",
+    no_results: "Нет результатов",
+    no_results_description: "Попробуйте другое название или слово из описания.",
+    from: "От",
+    link_copied: "Ссылка скопирована",
+    link_copy_error: "Не удалось скопировать ссылку"
   }
 }
 
