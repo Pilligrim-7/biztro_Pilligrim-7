@@ -1,9 +1,8 @@
-import { Users } from "lucide-react"
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 
-import PageSubtitle from "@/components/dashboard/page-subtitle"
 import {
   getCurrentOrganization,
   getMembers,
@@ -12,9 +11,14 @@ import {
 } from "@/server/actions/user/queries"
 import MemberInvite from "@/app/dashboard/settings/members/member-invite"
 import MemberTable from "@/app/dashboard/settings/members/member-table"
+import { MembersPageHeader } from "@/app/dashboard/settings/members/members-page-header"
 
-export const metadata: Metadata = {
-  title: "Miembros"
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("dashboard.settings.members")
+
+  return {
+    title: t("metaTitle")
+  }
 }
 
 export default async function MembersPage() {
@@ -58,16 +62,11 @@ export default async function MembersPage() {
 
   return (
     <div className="mx-auto grow px-4 sm:px-6">
-      <PageSubtitle>
-        <PageSubtitle.Icon icon={Users} />
-        <PageSubtitle.Title>Miembros</PageSubtitle.Title>
-        <PageSubtitle.Description>
-          Administra a los miembros de tu equipo
-        </PageSubtitle.Description>
-        <PageSubtitle.Actions>
-          {canInviteMember?.success && <MemberInvite isPro={isPro} />}
-        </PageSubtitle.Actions>
-      </PageSubtitle>
+      <MembersPageHeader
+        actions={
+          canInviteMember?.success ? <MemberInvite isPro={isPro} /> : undefined
+        }
+      />
       <div className="mt-6">
         <MemberTable
           data={members}
