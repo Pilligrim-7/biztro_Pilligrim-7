@@ -18,6 +18,7 @@ import {
   Trash2
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -144,8 +145,8 @@ function getReliabilityBadgeVariant(item: MenuImportItem) {
   return "secondary"
 }
 
-function getReliabilityLabel(item: MenuImportItem) {
-  if (item.needsReview) return "Revisar"
+function getReliabilityLabel(item: MenuImportItem, reviewLabel: string) {
+  if (item.needsReview) return reviewLabel
 
   return `${Math.round(item.reliabilityScore * 100)}%`
 }
@@ -174,6 +175,12 @@ export default function MenuImportForm({
   returnTo?: string
 }) {
   const router = useRouter()
+  const t = useTranslations("dashboard.menuItems.import.ai")
+  const tProducts = useTranslations("dashboard.menuItems.products")
+  const tCommon = useTranslations("dashboard.common")
+  const tDataGrid = useTranslations("menuEditor.dataGrid")
+  const tErrors = useTranslations("dashboard.menuItems.import.errors")
+  const defaultVariant = tProducts("defaultVariant")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [items, setItems] = useState<EditableItem[]>([])
   const [isParsing, setIsParsing] = useState(false)
@@ -198,7 +205,7 @@ export default function MenuImportForm({
       }
       const extracted = (response.data?.success ?? []).map(item => ({
         ...item,
-        variantName: item.variantName ?? "Regular",
+        variantName: item.variantName ?? defaultVariant,
         _id: generateId()
       }))
       setItems(extracted)
@@ -208,7 +215,7 @@ export default function MenuImportForm({
     onError: error => {
       console.error(error)
       Sentry.captureException(error, { tags: { section: "pdf-import" } })
-      setParseError("Error al procesar el archivo PDF")
+      setParseError(t("parseErrorPdf"))
       setIsParsing(false)
     }
   })
@@ -226,12 +233,12 @@ export default function MenuImportForm({
       }
       const createdItems = response.data?.success
       if (!createdItems?.length) {
-        toast.error("No se pudieron guardar los productos importados")
+        toast.error(t("bulkSaveFailed"))
         resetBulkCreate()
         return
       }
 
-      toast.success(`${createdItems.length} productos importados correctamente`)
+      toast.success(t("savedSuccess", { count: createdItems.length }))
       // Clear UI state: items grid and selected file
       setItems([])
       setSelectedFile(null)
@@ -245,7 +252,7 @@ export default function MenuImportForm({
     onError: error => {
       console.error(error)
       Sentry.captureException(error, { tags: { section: "pdf-import-save" } })
-      toast.error("Error al guardar los productos")
+      toast.error(t("saveError"))
     }
   })
   const {
@@ -262,12 +269,12 @@ export default function MenuImportForm({
 
       const menuId = response.data?.success?.menu.id
       if (!menuId) {
-        toast.error("No se pudo abrir el menú generado")
+        toast.error(t("couldNotOpenMenu"))
         resetCreateMenuFromImport()
         return
       }
 
-      toast.success("Menú completo generado correctamente")
+      toast.success(t("menuCreated"))
       setItems([])
       setSelectedFile(null)
       setSelectedMimeType(null)
@@ -282,7 +289,7 @@ export default function MenuImportForm({
       Sentry.captureException(error, {
         tags: { section: "menu-import-full-menu" }
       })
-      toast.error("Error al generar el menú completo")
+      toast.error(t("menuCreateError"))
     }
   })
 
@@ -296,7 +303,7 @@ export default function MenuImportForm({
       setSelectedMimeType(null)
       sourceFileBase64Ref.current = null
       setItems([])
-      setParseError("Formato no soportado. Usa PDF, PNG, JPG/JPEG o WEBP.")
+      setParseError(t("unsupportedFormat"))
       return
     }
 
@@ -305,9 +312,7 @@ export default function MenuImportForm({
       setSelectedMimeType(null)
       sourceFileBase64Ref.current = null
       setItems([])
-      setParseError(
-        `El archivo es demasiado grande. El tamaño máximo permitido es ${MAX_PDF_FILE_SIZE_MB} MB.`
-      )
+      setParseError(t("fileTooLarge", { max: MAX_PDF_FILE_SIZE_MB }))
       return
     }
 
@@ -327,7 +332,7 @@ export default function MenuImportForm({
     reader.onload = () => {
       const base64 = (reader.result as string).split(",")[1]
       if (!base64) {
-        setParseError("No se pudo leer el archivo")
+        setParseError(t("readFileError"))
         setIsParsing(false)
         return
       }
@@ -340,7 +345,7 @@ export default function MenuImportForm({
       })
     }
     reader.onerror = () => {
-      setParseError("Error al leer el archivo")
+      setParseError(t("readFileGenericError"))
       setIsParsing(false)
     }
     reader.readAsDataURL(selectedFile)
@@ -349,7 +354,8 @@ export default function MenuImportForm({
     selectedMimeType,
     executeParse,
     simulateResponse,
-    simulateScenario
+    simulateScenario,
+    t
   ])
 
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
@@ -366,21 +372,24 @@ export default function MenuImportForm({
     []
   )
 
-  const handleDataChange = useCallback((newData: EditableItem[]) => {
-    setItems(
-      newData.map(item => ({
-        ...item,
-        variantName: item.variantName ?? "Regular",
-        description: item.description ?? "",
-        category: item.category ?? "",
-        currency: item.currency === "USD" ? "USD" : "MXN",
-        price:
-          typeof item.price === "number" && !Number.isNaN(item.price)
-            ? item.price
-            : 0
-      }))
-    )
-  }, [])
+  const handleDataChange = useCallback(
+    (newData: EditableItem[]) => {
+      setItems(
+        newData.map(item => ({
+          ...item,
+          variantName: item.variantName ?? defaultVariant,
+          description: item.description ?? "",
+          category: item.category ?? "",
+          currency: item.currency === "USD" ? "USD" : "MXN",
+          price:
+            typeof item.price === "number" && !Number.isNaN(item.price)
+              ? item.price
+              : 0
+        }))
+      )
+    },
+    [defaultVariant]
+  )
 
   const handleRowsDelete = useCallback((rows: EditableItem[]) => {
     if (rows.length === 0) return
@@ -394,7 +403,7 @@ export default function MenuImportForm({
       {
         _id: generateId(),
         name: "",
-        variantName: "Regular",
+        variantName: defaultVariant,
         description: "",
         price: 0,
         category: "",
@@ -410,7 +419,7 @@ export default function MenuImportForm({
       rowIndex: items.length,
       columnId: "name"
     }
-  }, [items.length])
+  }, [items.length, defaultVariant])
 
   const isMutating = isSaving || isCreatingMenu
 
@@ -419,44 +428,44 @@ export default function MenuImportForm({
       {
         id: "name",
         accessorKey: "name",
-        header: "Nombre *",
+        header: t("columnProductRequired"),
         size: 220,
         minSize: 180,
         meta: {
-          label: "Nombre",
+          label: tProducts("columnProduct"),
           cell: { variant: "short-text" as const }
         }
       },
       {
         id: "variantName",
         accessorKey: "variantName",
-        header: "Variante",
+        header: t("columnVariant"),
         size: 160,
         minSize: 130,
         meta: {
-          label: "Variante",
+          label: t("columnVariant"),
           cell: { variant: "short-text" as const }
         }
       },
       {
         id: "description",
         accessorKey: "description",
-        header: "Descripción",
+        header: tProducts("columnDescription"),
         size: 300,
         minSize: 220,
         meta: {
-          label: "Descripción",
+          label: tProducts("columnDescription"),
           cell: { variant: "long-text" as const }
         }
       },
       {
         id: "price",
         accessorKey: "price",
-        header: "Precio *",
+        header: t("columnPriceRequired"),
         size: 140,
         minSize: 120,
         meta: {
-          label: "Precio",
+          label: tProducts("columnPrice"),
           cell: {
             variant: "number" as const,
             min: 0,
@@ -467,22 +476,22 @@ export default function MenuImportForm({
       {
         id: "category",
         accessorKey: "category",
-        header: "Categoría",
+        header: tProducts("columnCategory"),
         size: 180,
         minSize: 140,
         meta: {
-          label: "Categoría",
+          label: tProducts("columnCategory"),
           cell: { variant: "short-text" as const }
         }
       },
       {
         id: "currency",
         accessorKey: "currency",
-        header: "Moneda",
+        header: tDataGrid("columnCurrency"),
         size: 120,
         minSize: 100,
         meta: {
-          label: "Moneda",
+          label: tDataGrid("columnCurrency"),
           cell: {
             variant: "select" as const,
             options: currencyOptions
@@ -492,7 +501,7 @@ export default function MenuImportForm({
       {
         id: "reliability",
         accessorKey: "reliabilityScore",
-        header: () => "Revisión IA",
+        header: () => t("aiReviewColumn"),
         size: 180,
         minSize: 160,
         enableColumnFilter: false,
@@ -501,7 +510,7 @@ export default function MenuImportForm({
           const score = Math.round(item.reliabilityScore * 100)
           const reviewReasons = item.reviewReasons.length
             ? item.reviewReasons
-            : ["Extracción con confianza media"]
+            : [t("mediumConfidenceFallback")]
 
           return (
             <div className="flex items-center gap-2">
@@ -511,13 +520,13 @@ export default function MenuImportForm({
                     variant={getReliabilityBadgeVariant(item)}
                     className="cursor-help"
                   >
-                    {getReliabilityLabel(item)}
+                    {getReliabilityLabel(item, t("reliabilityReview"))}
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-72">
                   <div className="flex flex-col gap-2">
                     <p className="font-medium">
-                      Confiabilidad estimada: {score}%
+                      {t("estimatedReliability", { score })}
                     </p>
                     {item.needsReview || item.reliabilityScore < 0.75 ? (
                       <ul className="list-disc pl-4">
@@ -526,11 +535,11 @@ export default function MenuImportForm({
                         ))}
                       </ul>
                     ) : (
-                      <p>La IA no detectó señales claras de ambigüedad.</p>
+                      <p>{t("noAmbiguity")}</p>
                     )}
                     {item.corrections.length > 0 ? (
                       <div className="flex flex-col gap-1">
-                        <p className="font-medium">Correcciones OCR</p>
+                        <p className="font-medium">{t("ocrCorrections")}</p>
                         {item.corrections.map(correction => (
                           <p key={`${correction.field}-${correction.original}`}>
                             {correction.original} → {correction.corrected}
@@ -542,7 +551,7 @@ export default function MenuImportForm({
                 </TooltipContent>
               </Tooltip>
               {item.corrections.length > 0 ? (
-                <Badge variant="blue">Corregido</Badge>
+                <Badge variant="blue">{t("correctedBadge")}</Badge>
               ) : null}
             </div>
           )
@@ -550,7 +559,7 @@ export default function MenuImportForm({
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Acciones</span>,
+        header: () => <span className="sr-only">{tCommon("actions")}</span>,
         size: 64,
         minSize: 64,
         maxSize: 64,
@@ -563,14 +572,22 @@ export default function MenuImportForm({
             onClick={() => handleDeleteItem(row.original._id)}
             disabled={isMutating}
             className="size-8"
-            aria-label="Eliminar producto"
+            aria-label={t("deleteProduct")}
           >
             <Trash2 className="size-4" />
           </Button>
         )
       }
     ],
-    [currencyOptions, handleDeleteItem, isMutating]
+    [
+      currencyOptions,
+      handleDeleteItem,
+      isMutating,
+      t,
+      tCommon,
+      tDataGrid,
+      tProducts
+    ]
   )
 
   const { table, ...dataGridProps } = useDataGrid({
@@ -636,7 +653,7 @@ export default function MenuImportForm({
   const handleSave = () => {
     const validItems = toActionItems(items)
     if (validItems.length === 0) {
-      toast.error("Agrega al menos un producto con nombre")
+      toast.error(tErrors("addAtLeastOneProduct"))
       return
     }
 
@@ -651,7 +668,7 @@ export default function MenuImportForm({
   const handleCreateFullMenu = () => {
     const validItems = toActionItems(items)
     if (validItems.length === 0) {
-      toast.error("Agrega al menos un producto con nombre")
+      toast.error(tErrors("addAtLeastOneProduct"))
       return
     }
 
@@ -661,7 +678,7 @@ export default function MenuImportForm({
     }
 
     if (!sourceFileBase64Ref.current || !selectedMimeType) {
-      toast.error("Vuelve a procesar el archivo antes de generar el menú")
+      toast.error(t("reprocessFile"))
       return
     }
 
@@ -688,8 +705,8 @@ export default function MenuImportForm({
   const isFullMenuMode = importMode === "full-menu"
   const hasImportedItems = items.length > 0
   const stepLabels: [string, string, string] = isFullMenuMode
-    ? ["Sube tu archivo", "La IA extrae y diseña", "Genera y abre el editor"]
-    : ["Sube tu archivo", "La IA extrae los productos", "Revisa y guarda"]
+    ? [t("steps.upload"), t("steps.extractDesign"), t("steps.generateEditor")]
+    : [t("steps.upload"), t("steps.extractProducts"), t("steps.reviewSave")]
 
   return (
     <TooltipProvider>
@@ -718,7 +735,7 @@ export default function MenuImportForm({
 
         <div className="flex flex-col gap-3">
           <div>
-            <p className="text-sm font-medium">Modo de importación</p>
+            <p className="text-sm font-medium">{t("modeImportTitle")}</p>
           </div>
           <RadioGroup
             value={importMode}
@@ -728,10 +745,9 @@ export default function MenuImportForm({
             <FieldLabel htmlFor="import-mode-items" className="h-full">
               <Field orientation="horizontal" className="h-full items-start">
                 <FieldContent>
-                  <FieldTitle>Solo productos</FieldTitle>
+                  <FieldTitle>{t("modeItems")}</FieldTitle>
                   <FieldDescription>
-                    Extrae productos para revisarlos y guardarlos en tu
-                    catálogo.
+                    {t("modeItemsDescription")}
                   </FieldDescription>
                 </FieldContent>
                 <RadioGroupItem id="import-mode-items" value="items" />
@@ -742,10 +758,10 @@ export default function MenuImportForm({
                 <FieldContent>
                   <FieldTitle className="flex items-center gap-1.5">
                     {!isPro && <Lock className="size-3.5" />}
-                    Menú completo Pro
+                    {t("modeFullMenuPro")}
                   </FieldTitle>
                   <FieldDescription>
-                    Genera un menú digital completo con diseño y abre el editor.
+                    {t("modeFullMenuProDescription")}
                   </FieldDescription>
                 </FieldContent>
                 <RadioGroupItem id="import-mode-full-menu" value="full-menu" />
@@ -753,9 +769,7 @@ export default function MenuImportForm({
             </FieldLabel>
           </RadioGroup>
           <p className="text-muted-foreground text-xs">
-            {isFullMenuMode
-              ? "Generamos un menú digital con estilo a partir de tu archivo y abrimos el editor para que lo publiques."
-              : "Los productos se agregan a tu catálogo para editarlos y usarlos en cualquier menú."}
+            {isFullMenuMode ? t("modeDetailFullMenu") : t("modeDetailItems")}
           </p>
         </div>
 
@@ -806,12 +820,10 @@ export default function MenuImportForm({
                   />
                   <div className="text-center">
                     <p className="text-sm font-medium">
-                      {selectedFile
-                        ? selectedFile.name
-                        : "Haz clic para seleccionar un archivo"}
+                      {selectedFile ? selectedFile.name : t("clickToSelect")}
                     </p>
                     <p className="text-muted-foreground mt-0.5 text-xs">
-                      Funciona mejor con menús en texto claro y bien iluminados.
+                      {t("uploadTip")}
                     </p>
                     <div className="mt-2 flex flex-wrap justify-center gap-1.5">
                       {["PDF", "PNG", "JPG", "WEBP"].map(fmt => (
@@ -826,7 +838,7 @@ export default function MenuImportForm({
                       ))}
                     </div>
                     <p className="text-muted-foreground mt-1.5 text-xs">
-                      Tamaño máximo {MAX_PDF_FILE_SIZE_MB} MB
+                      {t("maxFileSize", { max: MAX_PDF_FILE_SIZE_MB })}
                     </p>
                   </div>
                   <input
@@ -843,15 +855,15 @@ export default function MenuImportForm({
 
           {!isPro && items.length === 0 && (
             <p className="text-muted-foreground text-center text-xs">
-              El plan básico incluye hasta {appConfig.itemLimit} productos.{" "}
+              {t("basicPlanLimit", { limit: appConfig.itemLimit })}{" "}
               <Link
                 href="/dashboard/settings/billing"
                 prefetch={false}
                 className="text-primary underline-offset-4 hover:underline"
               >
-                Actualiza a Pro
+                {t("upgradeLink")}
               </Link>{" "}
-              para importar sin límite.
+              {t("importUnlimited")}
             </p>
           )}
 
@@ -862,7 +874,7 @@ export default function MenuImportForm({
               {simulateEnabled && simulateResponse && (
                 <div className="flex items-center gap-3">
                   <Label htmlFor="simulate-scenario" className="text-sm">
-                    Escenario de simulación
+                    {t("simulateScenario")}
                   </Label>
                   <Select
                     value={simulateScenario}
@@ -875,9 +887,11 @@ export default function MenuImportForm({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">Menú simple</SelectItem>
+                      <SelectItem value="default">
+                        {t("simulateSimple")}
+                      </SelectItem>
                       <SelectItem value="variants">
-                        Múltiples variantes por producto
+                        {t("simulateVariants")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -896,10 +910,10 @@ export default function MenuImportForm({
                     <SparklesIcon className="size-4 fill-current" />
                   )}
                   {isParsing
-                    ? "Extrayendo productos..."
+                    ? t("extracting")
                     : simulateResponse
-                      ? "Simular extracción"
-                      : "Extraer productos del archivo"}
+                      ? t("simulateExtract")
+                      : t("extractFromFile")}
                 </Button>
               </BorderBeam>
             </div>
@@ -910,7 +924,7 @@ export default function MenuImportForm({
         {parseError && (
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
-            <AlertTitle>Error al procesar el archivo</AlertTitle>
+            <AlertTitle>{t("parseErrorTitle")}</AlertTitle>
             <AlertDescription>{parseError}</AlertDescription>
           </Alert>
         )}
@@ -933,16 +947,17 @@ export default function MenuImportForm({
             {!isPro && groupPreview.groupedItems > appConfig.itemLimit && (
               <Alert variant="warning">
                 <CircleAlert className="size-4" />
-                <AlertTitle>Superaste el límite del plan básico</AlertTitle>
+                <AlertTitle>{t("limitExceededTitle")}</AlertTitle>
                 <AlertDescription className="flex flex-col gap-3">
                   <span>
-                    Tienes {groupPreview.groupedItems} productos para importar,
-                    pero el plan básico permite hasta {appConfig.itemLimit}.
-                    Actualiza a Pro para guardarlos todos.
+                    {t("limitExceededDescription", {
+                      count: groupPreview.groupedItems,
+                      limit: appConfig.itemLimit
+                    })}
                   </span>
                   <Button asChild size="sm" className="self-start">
                     <Link href="/dashboard/settings/billing" prefetch={false}>
-                      Actualizar a Pro
+                      {t("upgradeToPro")}
                     </Link>
                   </Button>
                 </AlertDescription>
@@ -950,19 +965,18 @@ export default function MenuImportForm({
             )}
             <div className="flex flex-row items-end-safe gap-2 px-3">
               <p className="text-sm font-medium">
-                {items.length} producto{items.length !== 1 ? "s" : ""} extraído
-                {items.length !== 1 ? "s" : ""}. Revisa y edita antes de
-                guardar.
+                {t("itemsExtractedReview", { count: items.length })}
               </p>
               <p className="text-muted-foreground text-xs">
-                {groupPreview.totalRows} fila
-                {groupPreview.totalRows !== 1 ? "s" : ""} →{" "}
-                {groupPreview.groupedItems} producto
-                {groupPreview.groupedItems !== 1 ? "s" : ""} con{" "}
-                {groupPreview.totalRows} variante
-                {groupPreview.totalRows !== 1 ? "s" : ""}
+                {t("groupPreview", {
+                  rows: groupPreview.totalRows,
+                  products: groupPreview.groupedItems,
+                  variants: groupPreview.totalRows
+                })}
                 {groupPreview.multiVariantItems > 0
-                  ? ` (${groupPreview.multiVariantItems} con múltiples variantes)`
+                  ? ` ${t("groupPreviewMultiVariant", {
+                      count: groupPreview.multiVariantItems
+                    })}`
                   : ""}
               </p>
             </div>
@@ -971,14 +985,12 @@ export default function MenuImportForm({
             reviewSummary.correctedRowsCount > 0 ? (
               <Alert variant="information">
                 <CircleAlert className="size-4" />
-                <AlertTitle>Revisión recomendada</AlertTitle>
+                <AlertTitle>{t("recommendedReviewTitle")}</AlertTitle>
                 <AlertDescription>
-                  {reviewSummary.needsReviewCount} fila
-                  {reviewSummary.needsReviewCount === 1 ? "" : "s"} se sugiere
-                  revisión. {reviewSummary.correctedRowsCount} fila
-                  {reviewSummary.correctedRowsCount === 1 ? "" : "s"} incluye
-                  {reviewSummary.correctedRowsCount === 1 ? "" : "n"}{" "}
-                  correcciones sugeridas por la IA.
+                  {t("recommendedReviewDescription", {
+                    needsReview: reviewSummary.needsReviewCount,
+                    corrected: reviewSummary.correctedRowsCount
+                  })}
                 </AlertDescription>
               </Alert>
             ) : null}
@@ -997,14 +1009,15 @@ export default function MenuImportForm({
             <div className="flex justify-between">
               <div className="px-2">
                 <span className="text-muted-foreground text-xs">
-                  Presiona <Kbd>Enter</Kbd> para iniciar cambios en una celda,{" "}
-                  <Kbd>Esc</Kbd> para cancelar la edición.
+                  {tDataGrid("keyboardEditPrefix")} <Kbd>Enter</Kbd>{" "}
+                  {tDataGrid("keyboardEditMiddle")} <Kbd>Esc</Kbd>{" "}
+                  {tDataGrid("keyboardEditCancel")}
                   <br />
-                  Presiona{" "}
+                  {tDataGrid("keyboardCommandsPrefix")}{" "}
                   <KbdGroup>
                     <Kbd>{modKey}</Kbd> + <Kbd>/</Kbd>
                   </KbdGroup>{" "}
-                  para mostrar la lista completa de comandos.
+                  {tDataGrid("keyboardCommandsSuffix")}
                 </span>
               </div>
               <Button
@@ -1016,19 +1029,18 @@ export default function MenuImportForm({
                 {isMutating && <Loader className="size-4 animate-spin" />}
                 <TextMorph>
                   {isCreatingMenu
-                    ? "Generando menú completo..."
+                    ? t("generatingFullMenu")
                     : isSaving
-                      ? "Guardando..."
+                      ? t("saving")
                       : importMode === "full-menu"
-                        ? "Crear menú completo"
-                        : `Guardar ${items.length} productos`}
+                        ? t("createFullMenu")
+                        : t("saveProducts", { count: items.length })}
                 </TextMorph>
               </Button>
             </div>
             {isFullMenuMode && (
               <p className="text-muted-foreground px-2 text-right text-xs">
-                Al generar, abriremos el editor del menú para que ajustes el
-                diseño y lo publiques.
+                {t("fullMenuEditorHint")}
               </p>
             )}
           </div>
@@ -1036,8 +1048,8 @@ export default function MenuImportForm({
         <UpgradeDialog
           open={showUpgradeDialog}
           onClose={() => setShowUpgradeDialog(false)}
-          title="Actualizar a Pro"
-          description="Actualiza tu plan a Pro para importar productos sin límite o crear un menú completo con IA ✨"
+          title={t("upgradeTitle")}
+          description={t("upgradeDescription")}
         />
       </div>
     </TooltipProvider>
