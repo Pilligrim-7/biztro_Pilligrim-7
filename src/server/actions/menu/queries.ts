@@ -81,8 +81,7 @@ export async function getMenuById(id: string) {
             : undefined
         if (resolvedName === "ContainerBlock") {
           const propsObj = compRec["props"] as
-            | Record<string, unknown>
-            | undefined
+            Record<string, unknown> | undefined
           const bg =
             typeof propsObj?.["backgroundImage"] === "string"
               ? (propsObj["backgroundImage"] as string)
@@ -120,6 +119,15 @@ export async function getMenuById(id: string) {
   return menu
 }
 
+export async function getMenuTitleById(id: string) {
+  const menu = await prisma.menu.findUnique({
+    where: { id },
+    select: { name: true }
+  })
+
+  return menu?.name ?? null
+}
+
 export async function getActiveMenuByOrganizationSlug(slug: string) {
   "use cache"
   cacheTag(`subdomain-${slug}`)
@@ -137,8 +145,7 @@ export async function getActiveMenuByOrganizationSlug(slug: string) {
     SubscriptionStatus.TRIALING,
     SubscriptionStatus.SPONSORED
   ]
-  const organization =
-    org && activeStatuses.includes(org.status) ? org : null
+  const organization = org && activeStatuses.includes(org.status) ? org : null
 
   if (!organization) {
     return null
