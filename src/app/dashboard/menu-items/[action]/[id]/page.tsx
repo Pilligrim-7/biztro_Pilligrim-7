@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 
-import { ItemFormContent } from "@/app/dashboard/menu-items/[action]/[id]/item-form-content"
+import { ItemFormContent } from "@/components/dashboard/item-form/item-form-content"
 
 export async function generateMetadata(props: {
   params: Promise<{ action: string; id: string }>

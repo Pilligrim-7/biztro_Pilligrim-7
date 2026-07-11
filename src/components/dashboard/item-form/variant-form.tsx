@@ -11,6 +11,7 @@ import { Trash } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { z } from "zod/v4"
 
+import VariantDelete from "@/components/dashboard/item-form/variant-delete"
 import { Button } from "@/components/ui/button"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -22,7 +23,6 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table"
-import VariantDelete from "@/app/dashboard/menu-items/[action]/[id]/variant-delete"
 import type { menuItemFormSchema } from "@/lib/types/menu-item"
 
 type VariantFormValues = z.infer<typeof menuItemFormSchema>

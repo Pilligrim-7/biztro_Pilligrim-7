@@ -1,9 +1,10 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
 
+import { ItemFormContent } from "@/components/dashboard/item-form/item-form-content"
 import Panel from "@/components/dashboard/page-panel"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ItemFormContent } from "@/app/dashboard/menu-items/[action]/[id]/item-form-content"
+import { debugLog } from "@/lib/debug-log"
 
 export async function generateMetadata(props: {
   params: Promise<{ action: string; id: string }>
@@ -19,6 +20,16 @@ export default async function ItemPage(props: {
   params: Promise<{ action: string; id: string }>
 }) {
   const params = await props.params
+
+  // #region agent log
+  debugLog({
+    hypothesisId: "D",
+    location: "modal/(.)[action]/[id]/page.tsx",
+    message: "Modal intercept item page rendered",
+    data: { action: params.action, id: params.id },
+    runId: "post-fix"
+  })
+  // #endregion
 
   return (
     <Panel className="rounded-lg sm:m-2 sm:h-[95%]">

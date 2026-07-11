@@ -30,6 +30,9 @@ import { type z } from "zod/v4"
 
 import { EmptyImageField } from "@/components/dashboard/empty-image-field"
 import { ImageField } from "@/components/dashboard/image-field"
+import { useItemFormLabels } from "@/components/dashboard/item-form/use-item-form-labels"
+import { VariantCreate } from "@/components/dashboard/item-form/variant-create"
+import VariantForm from "@/components/dashboard/item-form/variant-form"
 import { MenuSyncDialog } from "@/components/dashboard/menu-sync-dialog"
 import { useProGuard } from "@/components/dashboard/upgrade-dialog"
 import {
@@ -102,9 +105,6 @@ import {
 } from "@/server/actions/item/queries"
 import { translateMenuItemForLocale } from "@/server/actions/item/translations"
 import { syncMenusAfterCatalogChange } from "@/server/actions/menu/sync"
-import { useItemFormLabels } from "@/app/dashboard/menu-items/[action]/[id]/use-item-form-labels"
-import { VariantCreate } from "@/app/dashboard/menu-items/[action]/[id]/variant-create"
-import VariantForm from "@/app/dashboard/menu-items/[action]/[id]/variant-form"
 import { ImageType } from "@/lib/types/media"
 import {
   Allergens,
